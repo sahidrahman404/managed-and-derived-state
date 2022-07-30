@@ -1,6 +1,6 @@
 #+title: Tic Tac Toe: Managed and Derived State
 
-* Managed and Derived State
+** Managed and Derived State
 To bulid Tic Tac Toe we need some managed state and some derived state:
 ** 1. ~Managed State~: State that you need to explicitly manage
 In this tic tac toe project ~squares~ is the managed state and it's the state
