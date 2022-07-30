@@ -1,8 +1,50 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./app.css";
 
+interface SerializeAndDeserialize {
+  serialize: <T>(a: T) => string;
+  deserialize: <T>(a: T) => string;
+}
+
+const useLocalStorageWithState = function <T>(
+  key: string,
+  initialProps?: unknown,
+  options?: SerializeAndDeserialize
+): [T, React.Dispatch<React.SetStateAction<T>>] {
+  const defaultOptions = {
+    serialize: JSON.stringify,
+    deserialize: JSON.parse,
+  };
+
+  const [state, setState] = useState<T>(() => {
+    const valueInLocalStorage = window.localStorage.getItem(key);
+    if (valueInLocalStorage) {
+      return options
+        ? options.deserialize(valueInLocalStorage)
+        : defaultOptions.deserialize(valueInLocalStorage);
+    }
+
+    return typeof initialProps === "function" ? initialProps() : "";
+  });
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      key,
+      options
+        ? options.serialize(state as T)
+        : defaultOptions.serialize(state as T)
+    );
+  }, [options, defaultOptions, key, state]);
+
+  return [state, setState];
+};
+
 function Board() {
-  const [squares, setSquares] = useState<string[]>(Array(9).fill(null));
+  const emptySquares = Array(9).fill(null);
+  const [squares, setSquares] = useLocalStorageWithState<string[]>(
+    "squares",
+    emptySquares
+  );
 
   const nextValue = calculateNextValue(squares);
   const winner = calculateWinner(squares);
