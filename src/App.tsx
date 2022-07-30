@@ -25,13 +25,14 @@ const useLocalStorageWithState = function <T>(
         ? options.deserialize(valueInLocalStorage)
         : defaultOptions.deserialize(valueInLocalStorage);
     }
+
     if (typeof initialProps === "function") {
       return initialProps();
-    } else if (initialProps) {
+    } else if (String(initialProps)) {
       return initialProps;
-    } else {
-      return defaultProps;
     }
+
+    return defaultProps;
   });
 
   useEffect(() => {
