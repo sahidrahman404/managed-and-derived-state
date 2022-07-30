@@ -16,6 +16,8 @@ const useLocalStorageWithState = function <T>(
     deserialize: JSON.parse,
   };
 
+  const defaultProps = "";
+
   const [state, setState] = useState<T>(() => {
     const valueInLocalStorage = window.localStorage.getItem(key);
     if (valueInLocalStorage) {
@@ -23,8 +25,13 @@ const useLocalStorageWithState = function <T>(
         ? options.deserialize(valueInLocalStorage)
         : defaultOptions.deserialize(valueInLocalStorage);
     }
-
-    return typeof initialProps === "function" ? initialProps() : "";
+    if (typeof initialProps === "function") {
+      return initialProps();
+    } else if (initialProps) {
+      return initialProps;
+    } else {
+      return defaultProps;
+    }
   });
 
   useEffect(() => {
@@ -39,35 +46,16 @@ const useLocalStorageWithState = function <T>(
   return [state, setState];
 };
 
-function Board() {
-  const emptySquares = Array(9).fill(null);
-  const [squares, setSquares] = useLocalStorageWithState<string[]>(
-    "squares",
-    emptySquares
-  );
-
-  const nextValue = calculateNextValue(squares);
-  const winner = calculateWinner(squares);
-  const status = calculateStatus(winner, squares, nextValue);
-
-  function selectSquare(index: number) {
-    if (winner || squares[index] !== null) {
-      return;
-    }
-
-    const squaresCopy = [...squares];
-    squaresCopy[index] = nextValue;
-
-    setSquares(squaresCopy);
-  }
-
-  function restart() {
-    setSquares(Array(9).fill(null));
-  }
-
+function Board({
+  squares,
+  onClick,
+}: {
+  squares: any;
+  onClick: (square: number) => void;
+}) {
   function renderSquare(i: number) {
     return (
-      <button className="square" onClick={() => selectSquare(i)}>
+      <button className="square" onClick={() => onClick(i)}>
         {squares[i]}
       </button>
     );
@@ -75,7 +63,6 @@ function Board() {
 
   return (
     <div>
-      <div className="status">{status}</div>
       <div className="board-row">
         {renderSquare(0)}
         {renderSquare(1)}
@@ -91,18 +78,67 @@ function Board() {
         {renderSquare(7)}
         {renderSquare(8)}
       </div>
-      <button className="restart" onClick={restart}>
-        restart
-      </button>
     </div>
   );
 }
 
 function Game() {
+  const emptySquares = Array(9).fill(null);
+  const [history, setHistory] = useLocalStorageWithState<string[][]>(
+    "history",
+    [emptySquares]
+  );
+  const [currentStep, setCurrentStep] = useLocalStorageWithState<number>(
+    "step",
+    0
+  );
+
+  const currentSquares = history[currentStep];
+  const nextValue = calculateNextValue(currentSquares);
+  const winner = calculateWinner(currentSquares);
+  const status = calculateStatus(winner, currentSquares, nextValue);
+
+  function selectSquare(square: number) {
+    if (winner || currentSquares[square]) {
+      return;
+    }
+
+    const newHistory = history.slice(0, currentStep + 1);
+    const squares = [...currentSquares];
+
+    squares[square] = nextValue;
+    setHistory([...newHistory, squares]);
+    setCurrentStep(newHistory.length);
+  }
+
+  function restart() {
+    setHistory([emptySquares]);
+    setCurrentStep(0);
+  }
+
+  const moves = history.map((_, step) => {
+    const desc = step ? `Go to move #${step}` : "Go to game start";
+    const isCurrentStep = step === currentStep;
+    return (
+      <li key={step}>
+        <button disabled={isCurrentStep} onClick={() => setCurrentStep(step)}>
+          {desc} {isCurrentStep ? "(current)" : null}
+        </button>
+      </li>
+    );
+  });
+
   return (
     <div className="game">
       <div className="game-board">
-        <Board />
+        <Board onClick={selectSquare} squares={currentSquares} />
+        <button className="restart" onClick={restart}>
+          restart
+        </button>
+      </div>
+      <div className="game-info">
+        <div>{status}</div>
+        <ol>{moves}</ol>
       </div>
     </div>
   );
