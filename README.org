@@ -1,0 +1,54 @@
+#+title: Tic Tac Toe: Managed and Derived State
+
+* Managed and Derived State
+To bulid Tic Tac Toe we need some managed state and some derived state:
+** 1. ~Managed State~: State that you need to explicitly manage
+In this tic tac toe project ~squares~ is the managed state and it's the state
+of the board in a single-dimensional array:
+*** Squares Array
+   #+begin_src js
+[
+  'X', 'O', 'X',
+  'X', 'O', 'O',
+  'X', 'X', 'O'
+]
+   #+end_src
+This will start out as an empty array because it's the start of the game.
+** 2. ~Derived State~: State that you can calculate based on other state
+*** Next Value
+~nextValue~ will be either the string "X" or "O" and is derived state which you can
+determine based on the value of squares. We can determine whose turn it is based
+on how many "X" and "O" squares there are. To calculate that we've written this out in a
+~calculateNextValue~ function at the bottom of the file.
+**** calculateNextValue Function
+#+begin_src tsx
+function calculateNextValue(squares: string[]) {
+  return squares.filter(Boolean).length % 2 === 0 ? "X" : "O";
+}
+#+end_src
+*** Winner
+~winner~ will be either the string ~X~ or ~O~ and is derived state which can also be
+determined based on the value of ~squares~ and you can use a ~calculateWinner~
+function to get that value.
+**** calculateWinner Function
+#+begin_src tsx
+function calculateWinner(squares: string[]) {
+  const lines = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6],
+  ];
+  for (let i = 0; i < lines.length; i++) {
+    const [a, b, c] = lines[i];
+    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+      return squares[a];
+    }
+  }
+  return null;
+}
+#+end_src
